@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Gastos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+        header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 15px; color: #2c3e50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        button { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #34495e; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .saludable { background: #d4edda; color: #155724; }
+        .en-riesgo { background: #fff3cd; color: #856404; }
+        .deficit { background: #f8d7da; color: #721c24; }
+        .btn-delete { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
+        .btn-delete:hover { background: #c0392b; }
+        .presupuesto-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .presupuesto-group input { flex: 1; }
+        #mensaje { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
+        .exito { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>💰 Gestión de Gastos Personales</h1>
+</header>
+
+<div class="container">
+
+    <!-- Formulario crear gasto -->
+    <div class="card">
+        <h2>Registrar Gasto</h2>
+        <div id="mensaje"></div>
+        <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" id="descripcion" placeholder="Ej: Mercado semanal">
+        </div>
+        <div class="form-group">
+            <label>Monto</label>
+            <input type="number" id="monto" placeholder="Ej: 50000">
+        </div>
+        <div class="form-group">
+            <label>Categoría</label>
+            <select id="categoria">
+                <option value="comida">Comida</option>
+                <option value="transporte">Transporte</option>
+                <option value="ocio">Ocio</option>
+                <option value="salud">Salud</option>
+                <option value="educacion">Educación</option>
+                <option value="otros">Otros</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="fecha">
+        </div>
+        <button onclick="crearGasto()">Registrar Gasto</button>
+    </div>
+
+    <!-- Lista de gastos -->
+    <div class="card">
+        <h2>Gastos Registrados</h2>
+        <button onclick="cargarGastos()" style="margin-bottom:15px">Actualizar lista</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Categoría</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-gastos">
+                <tr><td colspan="6">No hay gastos registrados</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Análisis financiero -->
+    <div class="card">
+        <h2>Análisis Financiero</h2>
+        <p style="margin-bottom:15px">Define un presupuesto por categoría:</p>
+        <div id="presupuestos">
+            <div class="presupuesto-group">
+                <select class="cat-select">
+                    <option value="comida">Comida</option>
+                    <option value="transporte">Transporte</option>
+                    <option value="ocio">Ocio</option>
+                    <option value="salud">Salud</option>
+                    <option value="educacion">Educación</option>
+                    <option value="otros">Otros</option>
+                </select>
+                <input type="number" class="limite-input" placeholder="Límite">
+            </div>
+        </div>
+        <button onclick="agregarPresupuesto()" style="margin-bottom:15px; margin-top:10px">+ Agregar categoría</button>
+        <button onclick="analizarFinanzas()">Analizar</button>
+        <div id="resultado-analisis" style="margin-top:20px"></div>
+    </div>
+
+</div>
+
+<script>
+    const API = "http://127.0.0.1:8000"
+
+    function mostrarMensaje(texto, tipo) {
+        const el = document.getElementById("mensaje")
+        el.textContent = texto
+        el.className = tipo
+        el.style.display = "block"
+        setTimeout(() => el.style.display = "none", 3000)
+    }
+
+    async function crearGasto() {
+        const body = {
+            descripcion: document.getElementById("descripcion").value,
+            monto: parseFloat(document.getElementById("monto").value),
+            categoria: document.getElementById("categoria").value,
+            fecha: document.getElementById("fecha").value
+        }
+        try {
+            const res = await fetch(`${API}/gastos/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            })
+            const data = await res.json()
+            if (res.ok) {
+                mostrarMensaje("Gasto registrado correctamente", "exito")
+                cargarGastos()
+            } else {
+                mostrarMensaje("Error: " + JSON.stringify(data.detail), "error")
+            }
+        } catch (e) {
+            mostrarMensaje("Error al conectar con la API", "error")
+        }
+    }
+
+    async function cargarGastos() {
+        const res = await fetch(`${API}/gastos/`)
+        const data = await res.json()
+        const tbody = document.getElementById("tabla-gastos")
+        if (!data || data.mensaje) {
+            tbody.innerHTML = "<tr><td colspan='6'>No hay gastos registrados</td></tr>"
+            return
+        }
+        tbody.innerHTML = Object.entries(data).map(([id, g]) => `
+            <tr>
+                <td>${id}</td>
+                <td>${g.descripcion}</td>
+                <td>$${g.monto.toLocaleString()}</td>
+                <td>${g.categoria}</td>
+                <td>${g.fecha}</td>
+                <td><button class="btn-delete" onclick="eliminarGasto(${id})">Eliminar</button></td>
+            </tr>
+        `).join("")
+    }
+
+    async function eliminarGasto(id) {
+        await fetch(`${API}/gastos/${id}`, { method: "DELETE" })
+        cargarGastos()
+    }
+
+    function agregarPresupuesto() {
+        const div = document.createElement("div")
+        div.className = "presupuesto-group"
+        div.innerHTML = `
+            <select class="cat-select">
+                <option value="comida">Comida</option>
+                <option value="transporte">Transporte</option>
+                <option value="ocio">Ocio</option>
+                <option value="salud">Salud</option>
+                <option value="educacion">Educación</option>
+                <option value="otros">Otros</option>
+            </select>
+            <input type="number" class="limite-input" placeholder="Límite">
+        `
+        document.getElementById("presupuestos").appendChild(div)
+    }
+
+    async function analizarFinanzas() {
+        const categorias = document.querySelectorAll(".cat-select")
+        const limites = document.querySelectorAll(".limite-input")
+        const presupuestos = []
+        categorias.forEach((cat, i) => {
+            if (limites[i].value) {
+                presupuestos.push({ categoria: cat.value, limite: parseFloat(limites[i].value) })
+            }
+        })
+        const res = await fetch(`${API}/analisis/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(presupuestos)
+        })
+        const data = await res.json()
+        if (!res.ok) {
+            document.getElementById("resultado-analisis").innerHTML = `<p style="color:red">${data.detail}</p>`
+            return
+        }
+        let html = `<p><strong>Total gastado:</strong> $${data.total_general.toLocaleString()}</p>
+                    <p><strong>Mayor gasto en:</strong> ${data.categoria_mayor_gasto}</p><br>
+                    <table><thead><tr><th>Categoría</th><th>Gastado</th><th>Límite</th><th>% Usado</th><th>Estado</th></tr></thead><tbody>`
+        for (const [cat, info] of Object.entries(data.analisis_por_categoria)) {
+            const clase = info.estado === "saludable" ? "saludable" : info.estado === "en riesgo" ? "en-riesgo" : "deficit"
+            html += `<tr>
+                <td>${cat}</td>
+                <td>$${info.gastado.toLocaleString()}</td>
+                <td>$${info.limite.toLocaleString()}</td>
+                <td>${info.porcentaje_usado}%</td>
+                <td><span class="badge ${clase}">${info.estado}</span></td>
+            </tr>`
+        }
+        html += "</tbody></table>"
+        document.getElementById("resultado-analisis").innerHTML = html
+    }
+
+    cargarGastos()
+</script>
+
+</body>
+</html>
