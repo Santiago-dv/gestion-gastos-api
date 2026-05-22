@@ -4,85 +4,214 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Gastos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
-        header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
-        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h2 { margin-bottom: 15px; color: #2c3e50; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        button { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
-        button:hover { background: #34495e; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; font-weight: bold; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .saludable { background: #d4edda; color: #155724; }
-        .en-riesgo { background: #fff3cd; color: #856404; }
-        .deficit { background: #f8d7da; color: #721c24; }
-        .btn-delete { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
+        body { font-family: 'Inter', sans-serif; background: #eef2f7; color: #333; }
+
+        header {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: white;
+            padding: 28px 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        header h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
+        header p { font-size: 13px; color: #a0b0c0; margin-top: 5px; }
+
+        .container { max-width: 960px; margin: 32px auto; padding: 0 20px; }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+
+        h2 { margin-bottom: 18px; color: #1a2a3a; font-size: 17px; font-weight: 600; }
+
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #555; }
+        input, select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border 0.2s;
+            background: #fafafa;
+        }
+        input:focus, select:focus { outline: none; border-color: #2c3e50; background: white; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        button {
+            background: #2c3e50;
+            color: white;
+            padding: 11px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background: #1a2a3a; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+
+        .btn-delete { background: #e74c3c; padding: 6px 12px; font-size: 12px; }
         .btn-delete:hover { background: #c0392b; }
-        .btn-edit { background: #f39c12; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-edit { background: #f39c12; padding: 6px 12px; font-size: 12px; margin-right: 6px; }
         .btn-edit:hover { background: #d68910; }
         .btn-cancelar { background: #95a5a6; margin-left: 10px; }
         .btn-cancelar:hover { background: #7f8c8d; }
+        .btn-secundario { background: #f0f2f5; color: #2c3e50; border: 1.5px solid #ddd; }
+        .btn-secundario:hover { background: #e0e4ea; }
+
+        #mensaje {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .exito { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            background: #f4f6f9;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { padding: 13px 14px; border-bottom: 1px solid #f0f0f0; color: #444; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafbfc; }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .saludable { background: #d4edda; color: #155724; }
+        .en-riesgo { background: #fff3cd; color: #856404; }
+        .deficit { background: #f8d7da; color: #721c24; }
+
+        .cat-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #eef2f7;
+            color: #2c3e50;
+        }
+
         .presupuesto-group { display: flex; gap: 10px; margin-bottom: 10px; }
         .presupuesto-group input { flex: 1; }
-        #mensaje { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
-        .exito { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .modo-edicion { border: 2px solid #f39c12; }
-        .titulo-form { display: flex; align-items: center; justify-content: space-between; }
+
+        .modo-edicion { border: 2px solid #f39c12 !important; }
+
+        /* Tarjetas resumen */
+        .tarjeta-resumen {
+            flex: 1;
+            min-width: 180px;
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            text-align: center;
+        }
+        .tarjeta-resumen p:first-child { color: #888; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .tarjeta-resumen p:last-child { font-size: 24px; font-weight: 700; }
+
+        .seccion-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .seccion-header h2 { margin-bottom: 0; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>💰 Gestión de Gastos Personales</h1>
+    <p>Registra, organiza y analiza tus finanzas</p>
 </header>
 
 <div class="container">
 
+    <!-- Resumen en tarjetas -->
+    <div style="display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap;">
+        <div class="tarjeta-resumen" style="border-top:4px solid #2c3e50;">
+            <p>Total gastado</p>
+            <p id="resumen-total" style="color:#2c3e50;">$0</p>
+        </div>
+        <div class="tarjeta-resumen" style="border-top:4px solid #27ae60;">
+            <p>Cantidad de gastos</p>
+            <p id="resumen-cantidad" style="color:#27ae60;">0</p>
+        </div>
+        <div class="tarjeta-resumen" style="border-top:4px solid #e67e22;">
+            <p>Categoría más usada</p>
+            <p id="resumen-categoria" style="color:#e67e22; font-size:18px;">—</p>
+        </div>
+        <div class="tarjeta-resumen" style="border-top:4px solid #8e44ad;">
+            <p>Gasto promedio</p>
+            <p id="resumen-promedio" style="color:#8e44ad;">$0</p>
+        </div>
+    </div>
+
     <!-- Formulario crear/editar gasto -->
     <div class="card">
-        <div class="titulo-form">
-            <h2 id="titulo-form">Registrar Gasto</h2>
+        <div class="seccion-header">
+            <h2 id="titulo-form">➕ Registrar Gasto</h2>
         </div>
         <div id="mensaje"></div>
-        <div class="form-group">
-            <label>Descripción</label>
-            <input type="text" id="descripcion" placeholder="Ej: Mercado semanal">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" id="descripcion" placeholder="Ej: Mercado semanal">
+            </div>
+            <div class="form-group">
+                <label>Monto</label>
+                <input type="number" id="monto" placeholder="Ej: 50000">
+            </div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="categoria">
+                    <option value="comida">🍔 Comida</option>
+                    <option value="transporte">🚗 Transporte</option>
+                    <option value="ocio">🎮 Ocio</option>
+                    <option value="salud">🏥 Salud</option>
+                    <option value="educacion">📚 Educación</option>
+                    <option value="otros">📦 Otros</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="fecha">
+            </div>
         </div>
-        <div class="form-group">
-            <label>Monto</label>
-            <input type="number" id="monto" placeholder="Ej: 50000">
+        <div style="display:flex; gap:10px; margin-top:8px;">
+            <button id="btn-principal" onclick="guardarGasto()">Registrar Gasto</button>
+            <button class="btn-cancelar" id="btn-cancelar" onclick="cancelarEdicion()" style="display:none">Cancelar</button>
         </div>
-        <div class="form-group">
-            <label>Categoría</label>
-            <select id="categoria">
-                <option value="comida">Comida</option>
-                <option value="transporte">Transporte</option>
-                <option value="ocio">Ocio</option>
-                <option value="salud">Salud</option>
-                <option value="educacion">Educación</option>
-                <option value="otros">Otros</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Fecha</label>
-            <input type="date" id="fecha">
-        </div>
-        <button id="btn-principal" onclick="guardarGasto()">Registrar Gasto</button>
-        <button class="btn-cancelar" id="btn-cancelar" onclick="cancelarEdicion()" style="display:none">Cancelar</button>
     </div>
 
     <!-- Lista de gastos -->
     <div class="card">
-        <h2>Gastos Registrados</h2>
-        <button onclick="cargarGastos()" style="margin-bottom:15px">Actualizar lista</button>
+        <div class="seccion-header">
+            <h2>📋 Gastos Registrados</h2>
+            <button class="btn-secundario" onclick="cargarGastos()">↻ Actualizar</button>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -95,31 +224,33 @@
                 </tr>
             </thead>
             <tbody id="tabla-gastos">
-                <tr><td colspan="6">No hay gastos registrados</td></tr>
+                <tr><td colspan="6" style="text-align:center; color:#aaa; padding:30px;">No hay gastos registrados</td></tr>
             </tbody>
         </table>
     </div>
 
     <!-- Análisis financiero -->
     <div class="card">
-        <h2>Análisis Financiero</h2>
-        <p style="margin-bottom:15px">Define un presupuesto por categoría:</p>
+        <h2>📊 Análisis Financiero</h2>
+        <p style="margin-bottom:16px; color:#666; font-size:14px;">Define un presupuesto por categoría para analizar tu salud financiera:</p>
         <div id="presupuestos">
             <div class="presupuesto-group">
                 <select class="cat-select">
-                    <option value="comida">Comida</option>
-                    <option value="transporte">Transporte</option>
-                    <option value="ocio">Ocio</option>
-                    <option value="salud">Salud</option>
-                    <option value="educacion">Educación</option>
-                    <option value="otros">Otros</option>
+                    <option value="comida">🍔 Comida</option>
+                    <option value="transporte">🚗 Transporte</option>
+                    <option value="ocio">🎮 Ocio</option>
+                    <option value="salud">🏥 Salud</option>
+                    <option value="educacion">📚 Educación</option>
+                    <option value="otros">📦 Otros</option>
                 </select>
-                <input type="number" class="limite-input" placeholder="Límite">
+                <input type="number" class="limite-input" placeholder="Límite de presupuesto">
             </div>
         </div>
-        <button onclick="agregarPresupuesto()" style="margin-bottom:15px; margin-top:10px">+ Agregar categoría</button>
-        <button onclick="analizarFinanzas()">Analizar</button>
-        <div id="resultado-analisis" style="margin-top:20px"></div>
+        <div style="display:flex; gap:10px; margin-top:12px; margin-bottom:20px;">
+            <button class="btn-secundario" onclick="agregarPresupuesto()">+ Agregar categoría</button>
+            <button onclick="analizarFinanzas()">📊 Analizar</button>
+        </div>
+        <div id="resultado-analisis"></div>
     </div>
 
 </div>
@@ -179,7 +310,7 @@
         document.getElementById("monto").value = gasto.monto
         document.getElementById("categoria").value = gasto.categoria
         document.getElementById("fecha").value = gasto.fecha
-        document.getElementById("titulo-form").textContent = `Editando gasto #${id}`
+        document.getElementById("titulo-form").textContent = `✏️ Editando gasto #${id}`
         document.getElementById("btn-principal").textContent = "Guardar cambios"
         document.getElementById("btn-cancelar").style.display = "inline-block"
         document.querySelector(".card").classList.add("modo-edicion")
@@ -193,7 +324,7 @@
         document.getElementById("monto").value = ""
         document.getElementById("categoria").value = "comida"
         document.getElementById("fecha").value = ""
-        document.getElementById("titulo-form").textContent = "Registrar Gasto"
+        document.getElementById("titulo-form").textContent = "➕ Registrar Gasto"
         document.getElementById("btn-principal").textContent = "Registrar Gasto"
         document.getElementById("btn-cancelar").style.display = "none"
         document.querySelector(".card").classList.remove("modo-edicion")
@@ -204,25 +335,48 @@
         const data = await res.json()
         const tbody = document.getElementById("tabla-gastos")
         if (!data || data.mensaje) {
-            tbody.innerHTML = "<tr><td colspan='6'>No hay gastos registrados</td></tr>"
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#aaa; padding:30px;'>No hay gastos registrados</td></tr>"
+            actualizarResumen([])
             return
         }
-        tbody.innerHTML = Object.entries(data).map(([id, g]) => `
+        const gastos = Object.entries(data)
+        tbody.innerHTML = gastos.map(([id, g]) => `
             <tr>
-                <td>${id}</td>
-                <td>${g.descripcion}</td>
-                <td>$${g.monto.toLocaleString()}</td>
-                <td>${g.categoria}</td>
-                <td>${g.fecha}</td>
+                <td style="color:#aaa; font-size:12px;">#${id}</td>
+                <td style="font-weight:500;">${g.descripcion}</td>
+                <td style="font-weight:600; color:#2c3e50;">$${g.monto.toLocaleString()}</td>
+                <td><span class="cat-badge">${g.categoria}</span></td>
+                <td style="color:#888; font-size:13px;">${g.fecha}</td>
                 <td>
-                    <button class="btn-edit" onclick='activarEdicion(${id}, ${JSON.stringify(g)})'>Editar</button>
-                    <button class="btn-delete" onclick="eliminarGasto(${id})">Eliminar</button>
+                    <button class="btn-edit" onclick='activarEdicion(${id}, ${JSON.stringify(g)})'>✏️ Editar</button>
+                    <button class="btn-delete" onclick="eliminarGasto(${id})">🗑️ Eliminar</button>
                 </td>
             </tr>
         `).join("")
+        actualizarResumen(gastos.map(([, g]) => g))
+    }
+
+    function actualizarResumen(gastos) {
+        if (gastos.length === 0) {
+            document.getElementById("resumen-total").textContent = "$0"
+            document.getElementById("resumen-cantidad").textContent = "0"
+            document.getElementById("resumen-categoria").textContent = "—"
+            document.getElementById("resumen-promedio").textContent = "$0"
+            return
+        }
+        const total = gastos.reduce((acc, g) => acc + g.monto, 0)
+        const promedio = total / gastos.length
+        const conteo = {}
+        gastos.forEach(g => conteo[g.categoria] = (conteo[g.categoria] || 0) + 1)
+        const categoriaMasUsada = Object.entries(conteo).sort((a, b) => b[1] - a[1])[0][0]
+        document.getElementById("resumen-total").textContent = "$" + total.toLocaleString()
+        document.getElementById("resumen-cantidad").textContent = gastos.length
+        document.getElementById("resumen-categoria").textContent = categoriaMasUsada
+        document.getElementById("resumen-promedio").textContent = "$" + Math.round(promedio).toLocaleString()
     }
 
     async function eliminarGasto(id) {
+        if (!confirm("¿Estás seguro de que quieres eliminar este gasto?")) return
         await fetch(`${API}/gastos/${id}`, { method: "DELETE" })
         cargarGastos()
     }
@@ -232,14 +386,14 @@
         div.className = "presupuesto-group"
         div.innerHTML = `
             <select class="cat-select">
-                <option value="comida">Comida</option>
-                <option value="transporte">Transporte</option>
-                <option value="ocio">Ocio</option>
-                <option value="salud">Salud</option>
-                <option value="educacion">Educación</option>
-                <option value="otros">Otros</option>
+                <option value="comida">🍔 Comida</option>
+                <option value="transporte">🚗 Transporte</option>
+                <option value="ocio">🎮 Ocio</option>
+                <option value="salud">🏥 Salud</option>
+                <option value="educacion">📚 Educación</option>
+                <option value="otros">📦 Otros</option>
             </select>
-            <input type="number" class="limite-input" placeholder="Límite">
+            <input type="number" class="limite-input" placeholder="Límite de presupuesto">
         `
         document.getElementById("presupuestos").appendChild(div)
     }
@@ -267,7 +421,7 @@
         const estados = Object.values(data.analisis_por_categoria).map(i => i.estado)
         let veredictoGlobal, colorVeredicto, iconoVeredicto
         if (estados.every(e => e === "saludable")) {
-            veredictoGlobal = "Tus finanzas están en buen estado"
+            veredictoGlobal = "Tus finanzas están en buen estado ¡Sigue así!"
             colorVeredicto = "#d4edda"
             iconoVeredicto = "✅"
         } else if (estados.some(e => e === "déficit")) {
@@ -281,35 +435,45 @@
         }
 
         let html = `
-            <div style="background:${colorVeredicto}; padding:15px; border-radius:8px; margin-bottom:15px; text-align:center;">
-                <span style="font-size:24px">${iconoVeredicto}</span>
-                <p style="font-size:16px; font-weight:bold; margin-top:5px">${veredictoGlobal}</p>
+            <div style="background:${colorVeredicto}; padding:18px; border-radius:10px; margin-bottom:18px; text-align:center;">
+                <span style="font-size:28px">${iconoVeredicto}</span>
+                <p style="font-size:15px; font-weight:600; margin-top:6px;">${veredictoGlobal}</p>
             </div>
-            <div style="display:flex; gap:15px; margin-bottom:15px">
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; text-align:center;">
-                    <p style="color:#555; font-size:13px">Total gastado</p>
-                    <p style="font-size:22px; font-weight:bold; color:#2c3e50">$${data.total_general.toLocaleString()}</p>
+            <div style="display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px; background:#f4f6f9; padding:16px; border-radius:10px; text-align:center;">
+                    <p style="color:#888; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Total gastado</p>
+                    <p style="font-size:22px; font-weight:700; color:#2c3e50; margin-top:6px;">$${data.total_general.toLocaleString()}</p>
                 </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; text-align:center;">
-                    <p style="color:#555; font-size:13px">Mayor gasto en</p>
-                    <p style="font-size:22px; font-weight:bold; color:#2c3e50">${data.categoria_mayor_gasto}</p>
+                <div style="flex:1; min-width:140px; background:#f4f6f9; padding:16px; border-radius:10px; text-align:center;">
+                    <p style="color:#888; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Mayor gasto en</p>
+                    <p style="font-size:22px; font-weight:700; color:#e67e22; margin-top:6px;">${data.categoria_mayor_gasto}</p>
                 </div>
             </div>
-            <table><thead><tr><th>Categoría</th><th>Gastado</th><th>Límite</th><th>% Usado</th><th>Estado</th></tr></thead><tbody>`
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Gastado</th>
+                        <th>Límite</th>
+                        <th>% Usado</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>`
 
         for (const [cat, info] of Object.entries(data.analisis_por_categoria)) {
             const clase = info.estado === "saludable" ? "saludable" : info.estado === "en riesgo" ? "en-riesgo" : "deficit"
             const barra = Math.min(info.porcentaje_usado, 100)
             const colorBarra = info.estado === "saludable" ? "#28a745" : info.estado === "en riesgo" ? "#ffc107" : "#dc3545"
             html += `<tr>
-                <td>${cat}</td>
-                <td>$${info.gastado.toLocaleString()}</td>
-                <td>$${info.limite.toLocaleString()}</td>
+                <td><span class="cat-badge">${cat}</span></td>
+                <td style="font-weight:600;">$${info.gastado.toLocaleString()}</td>
+                <td style="color:#888;">$${info.limite.toLocaleString()}</td>
                 <td>
-                    <div style="background:#eee; border-radius:4px; height:8px; width:100px">
-                        <div style="background:${colorBarra}; width:${barra}%; height:8px; border-radius:4px"></div>
+                    <div style="background:#eee; border-radius:4px; height:8px; width:110px; margin-bottom:4px;">
+                        <div style="background:${colorBarra}; width:${barra}%; height:8px; border-radius:4px;"></div>
                     </div>
-                    <span style="font-size:12px">${info.porcentaje_usado}%</span>
+                    <span style="font-size:12px; color:#666;">${info.porcentaje_usado}%</span>
                 </td>
                 <td><span class="badge ${clase}">${info.estado}</span></td>
             </tr>`
