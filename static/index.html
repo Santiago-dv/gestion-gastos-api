@@ -144,7 +144,6 @@
             categoria: document.getElementById("categoria").value,
             fecha: document.getElementById("fecha").value
         }
-
         try {
             let res
             if (modoEdicion) {
@@ -160,7 +159,6 @@
                     body: JSON.stringify(body)
                 })
             }
-
             const data = await res.json()
             if (res.ok) {
                 mostrarMensaje(modoEdicion ? "Gasto actualizado correctamente" : "Gasto registrado correctamente", "exito")
@@ -265,16 +263,54 @@
             document.getElementById("resultado-analisis").innerHTML = `<p style="color:red">${data.detail}</p>`
             return
         }
-        let html = `<p><strong>Total gastado:</strong> $${data.total_general.toLocaleString()}</p>
-                    <p><strong>Mayor gasto en:</strong> ${data.categoria_mayor_gasto}</p><br>
-                    <table><thead><tr><th>Categoría</th><th>Gastado</th><th>Límite</th><th>% Usado</th><th>Estado</th></tr></thead><tbody>`
+
+        const estados = Object.values(data.analisis_por_categoria).map(i => i.estado)
+        let veredictoGlobal, colorVeredicto, iconoVeredicto
+        if (estados.every(e => e === "saludable")) {
+            veredictoGlobal = "Tus finanzas están en buen estado"
+            colorVeredicto = "#d4edda"
+            iconoVeredicto = "✅"
+        } else if (estados.some(e => e === "déficit")) {
+            veredictoGlobal = "Tienes categorías en déficit, revisa tus gastos"
+            colorVeredicto = "#f8d7da"
+            iconoVeredicto = "🚨"
+        } else {
+            veredictoGlobal = "Algunas categorías están en riesgo, ten cuidado"
+            colorVeredicto = "#fff3cd"
+            iconoVeredicto = "⚠️"
+        }
+
+        let html = `
+            <div style="background:${colorVeredicto}; padding:15px; border-radius:8px; margin-bottom:15px; text-align:center;">
+                <span style="font-size:24px">${iconoVeredicto}</span>
+                <p style="font-size:16px; font-weight:bold; margin-top:5px">${veredictoGlobal}</p>
+            </div>
+            <div style="display:flex; gap:15px; margin-bottom:15px">
+                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; text-align:center;">
+                    <p style="color:#555; font-size:13px">Total gastado</p>
+                    <p style="font-size:22px; font-weight:bold; color:#2c3e50">$${data.total_general.toLocaleString()}</p>
+                </div>
+                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; text-align:center;">
+                    <p style="color:#555; font-size:13px">Mayor gasto en</p>
+                    <p style="font-size:22px; font-weight:bold; color:#2c3e50">${data.categoria_mayor_gasto}</p>
+                </div>
+            </div>
+            <table><thead><tr><th>Categoría</th><th>Gastado</th><th>Límite</th><th>% Usado</th><th>Estado</th></tr></thead><tbody>`
+
         for (const [cat, info] of Object.entries(data.analisis_por_categoria)) {
             const clase = info.estado === "saludable" ? "saludable" : info.estado === "en riesgo" ? "en-riesgo" : "deficit"
+            const barra = Math.min(info.porcentaje_usado, 100)
+            const colorBarra = info.estado === "saludable" ? "#28a745" : info.estado === "en riesgo" ? "#ffc107" : "#dc3545"
             html += `<tr>
                 <td>${cat}</td>
                 <td>$${info.gastado.toLocaleString()}</td>
                 <td>$${info.limite.toLocaleString()}</td>
-                <td>${info.porcentaje_usado}%</td>
+                <td>
+                    <div style="background:#eee; border-radius:4px; height:8px; width:100px">
+                        <div style="background:${colorBarra}; width:${barra}%; height:8px; border-radius:4px"></div>
+                    </div>
+                    <span style="font-size:12px">${info.porcentaje_usado}%</span>
+                </td>
                 <td><span class="badge ${clase}">${info.estado}</span></td>
             </tr>`
         }
