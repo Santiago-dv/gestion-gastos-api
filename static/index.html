@@ -123,7 +123,6 @@
 
         .modo-edicion { border: 2px solid #f39c12 !important; }
 
-        /* Tarjetas resumen */
         .tarjeta-resumen {
             flex: 1;
             min-width: 180px;
@@ -167,6 +166,22 @@
             <p>Gasto promedio</p>
             <p id="resumen-promedio" style="color:#8e44ad;">$0</p>
         </div>
+    </div>
+
+    <!-- Meta de ahorro -->
+    <div class="card">
+        <div class="seccion-header">
+            <h2>🎯 Meta de Gasto Mensual</h2>
+        </div>
+        <p style="color:#666; font-size:14px; margin-bottom:16px;">Define cuánto quieres gastar máximo este mes:</p>
+        <div style="display:flex; gap:10px; align-items:flex-end;">
+            <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label>Límite mensual</label>
+                <input type="number" id="meta-limite" placeholder="Ej: 500000">
+            </div>
+            <button onclick="evaluarMeta()">🎯 Evaluar meta</button>
+        </div>
+        <div id="resultado-meta" style="margin-top:20px;"></div>
     </div>
 
     <!-- Formulario crear/editar gasto -->
@@ -379,6 +394,71 @@
         if (!confirm("¿Estás seguro de que quieres eliminar este gasto?")) return
         await fetch(`${API}/gastos/${id}`, { method: "DELETE" })
         cargarGastos()
+    }
+
+    async function evaluarMeta() {
+        const limite = parseFloat(document.getElementById("meta-limite").value)
+        if (!limite || limite <= 0) {
+            alert("Ingresa un límite mensual válido")
+            return
+        }
+        const res = await fetch(`${API}/analisis/meta`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ limite_mensual: limite })
+        })
+        const data = await res.json()
+        if (!res.ok) {
+            document.getElementById("resultado-meta").innerHTML = `<p style="color:red">${data.detail}</p>`
+            return
+        }
+
+        const colores = {
+            excelente: { bg: "#d4edda", color: "#155724", icono: "🟢" },
+            bien: { bg: "#d1ecf1", color: "#0c5460", icono: "🔵" },
+            precaucion: { bg: "#fff3cd", color: "#856404", icono: "🟡" },
+            superado: { bg: "#f8d7da", color: "#721c24", icono: "🔴" }
+        }
+        const c = colores[data.estado]
+        const barra = Math.min(data.porcentaje_usado, 100)
+        const colorBarra = data.estado === "excelente" ? "#28a745" : data.estado === "bien" ? "#17a2b8" : data.estado === "precaucion" ? "#ffc107" : "#dc3545"
+
+        document.getElementById("resultado-meta").innerHTML = `
+            <div style="background:${c.bg}; color:${c.color}; padding:16px; border-radius:10px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+                <span style="font-size:24px;">${c.icono}</span>
+                <div>
+                    <p style="font-weight:600; font-size:15px;">${data.mensaje}</p>
+                    <p style="font-size:13px; margin-top:3px;">Mes ${data.mes} / ${data.anio}</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
+                <div style="flex:1; min-width:130px; background:#f4f6f9; padding:14px; border-radius:10px; text-align:center;">
+                    <p style="color:#888; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Gastado este mes</p>
+                    <p style="font-size:20px; font-weight:700; color:#2c3e50; margin-top:6px;">$${data.total_gastado_mes.toLocaleString()}</p>
+                </div>
+                <div style="flex:1; min-width:130px; background:#f4f6f9; padding:14px; border-radius:10px; text-align:center;">
+                    <p style="color:#888; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Disponible</p>
+                    <p style="font-size:20px; font-weight:700; color:${data.disponible >= 0 ? '#27ae60' : '#e74c3c'}; margin-top:6px;">$${data.disponible.toLocaleString()}</p>
+                </div>
+                <div style="flex:1; min-width:130px; background:#f4f6f9; padding:14px; border-radius:10px; text-align:center;">
+                    <p style="color:#888; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Gastos este mes</p>
+                    <p style="font-size:20px; font-weight:700; color:#8e44ad; margin-top:6px;">${data.cantidad_gastos_mes}</p>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-bottom:6px;">
+                    <span>Progreso mensual</span>
+                    <span>${data.porcentaje_usado}%</span>
+                </div>
+                <div style="background:#eee; border-radius:6px; height:12px;">
+                    <div style="background:${colorBarra}; width:${barra}%; height:12px; border-radius:6px; transition:width 0.5s;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#aaa; margin-top:4px;">
+                    <span>$0</span>
+                    <span>$${limite.toLocaleString()}</span>
+                </div>
+            </div>
+        `
     }
 
     function agregarPresupuesto() {

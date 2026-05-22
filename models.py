@@ -63,3 +63,12 @@ class Presupuesto(BaseModel):
         if v <= 0:
             raise ValueError("El límite debe ser mayor a 0")
         return v
+
+class MetaAhorro(BaseModel):
+    limite_mensual: float
+
+    @field_validator("limite_mensual")
+    def limite_positivo(cls, v):
+        if v <= 0:
+            raise ValueError("El límite mensual debe ser mayor a 0")
+        return v
