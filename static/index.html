@@ -25,11 +25,17 @@
         .deficit { background: #f8d7da; color: #721c24; }
         .btn-delete { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
         .btn-delete:hover { background: #c0392b; }
+        .btn-edit { background: #f39c12; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-edit:hover { background: #d68910; }
+        .btn-cancelar { background: #95a5a6; margin-left: 10px; }
+        .btn-cancelar:hover { background: #7f8c8d; }
         .presupuesto-group { display: flex; gap: 10px; margin-bottom: 10px; }
         .presupuesto-group input { flex: 1; }
         #mensaje { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
         .exito { background: #d4edda; color: #155724; }
         .error { background: #f8d7da; color: #721c24; }
+        .modo-edicion { border: 2px solid #f39c12; }
+        .titulo-form { display: flex; align-items: center; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -40,9 +46,11 @@
 
 <div class="container">
 
-    <!-- Formulario crear gasto -->
+    <!-- Formulario crear/editar gasto -->
     <div class="card">
-        <h2>Registrar Gasto</h2>
+        <div class="titulo-form">
+            <h2 id="titulo-form">Registrar Gasto</h2>
+        </div>
         <div id="mensaje"></div>
         <div class="form-group">
             <label>Descripción</label>
@@ -67,7 +75,8 @@
             <label>Fecha</label>
             <input type="date" id="fecha">
         </div>
-        <button onclick="crearGasto()">Registrar Gasto</button>
+        <button id="btn-principal" onclick="guardarGasto()">Registrar Gasto</button>
+        <button class="btn-cancelar" id="btn-cancelar" onclick="cancelarEdicion()" style="display:none">Cancelar</button>
     </div>
 
     <!-- Lista de gastos -->
@@ -82,7 +91,7 @@
                     <th>Monto</th>
                     <th>Categoría</th>
                     <th>Fecha</th>
-                    <th>Acción</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="tabla-gastos">
@@ -117,6 +126,8 @@
 
 <script>
     const API = "https://gestion-gastos-api-production.up.railway.app"
+    let modoEdicion = false
+    let idEditando = null
 
     function mostrarMensaje(texto, tipo) {
         const el = document.getElementById("mensaje")
@@ -126,22 +137,34 @@
         setTimeout(() => el.style.display = "none", 3000)
     }
 
-    async function crearGasto() {
+    async function guardarGasto() {
         const body = {
             descripcion: document.getElementById("descripcion").value,
             monto: parseFloat(document.getElementById("monto").value),
             categoria: document.getElementById("categoria").value,
             fecha: document.getElementById("fecha").value
         }
+
         try {
-            const res = await fetch(`${API}/gastos/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            })
+            let res
+            if (modoEdicion) {
+                res = await fetch(`${API}/gastos/${idEditando}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                })
+            } else {
+                res = await fetch(`${API}/gastos/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                })
+            }
+
             const data = await res.json()
             if (res.ok) {
-                mostrarMensaje("Gasto registrado correctamente", "exito")
+                mostrarMensaje(modoEdicion ? "Gasto actualizado correctamente" : "Gasto registrado correctamente", "exito")
+                cancelarEdicion()
                 cargarGastos()
             } else {
                 mostrarMensaje("Error: " + JSON.stringify(data.detail), "error")
@@ -149,6 +172,33 @@
         } catch (e) {
             mostrarMensaje("Error al conectar con la API", "error")
         }
+    }
+
+    function activarEdicion(id, gasto) {
+        modoEdicion = true
+        idEditando = id
+        document.getElementById("descripcion").value = gasto.descripcion
+        document.getElementById("monto").value = gasto.monto
+        document.getElementById("categoria").value = gasto.categoria
+        document.getElementById("fecha").value = gasto.fecha
+        document.getElementById("titulo-form").textContent = `Editando gasto #${id}`
+        document.getElementById("btn-principal").textContent = "Guardar cambios"
+        document.getElementById("btn-cancelar").style.display = "inline-block"
+        document.querySelector(".card").classList.add("modo-edicion")
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    function cancelarEdicion() {
+        modoEdicion = false
+        idEditando = null
+        document.getElementById("descripcion").value = ""
+        document.getElementById("monto").value = ""
+        document.getElementById("categoria").value = "comida"
+        document.getElementById("fecha").value = ""
+        document.getElementById("titulo-form").textContent = "Registrar Gasto"
+        document.getElementById("btn-principal").textContent = "Registrar Gasto"
+        document.getElementById("btn-cancelar").style.display = "none"
+        document.querySelector(".card").classList.remove("modo-edicion")
     }
 
     async function cargarGastos() {
@@ -166,7 +216,10 @@
                 <td>$${g.monto.toLocaleString()}</td>
                 <td>${g.categoria}</td>
                 <td>${g.fecha}</td>
-                <td><button class="btn-delete" onclick="eliminarGasto(${id})">Eliminar</button></td>
+                <td>
+                    <button class="btn-edit" onclick='activarEdicion(${id}, ${JSON.stringify(g)})'>Editar</button>
+                    <button class="btn-delete" onclick="eliminarGasto(${id})">Eliminar</button>
+                </td>
             </tr>
         `).join("")
     }
